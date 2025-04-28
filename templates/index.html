@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Multi-Agent Research System</title>
+</head>
+<body>
+    <h1>Ask a Research Question</h1>
+    <form method="post">
+        <input type="text" name="query" placeholder="Enter your research topic" required>
+        <button type="submit">Ask</button>
+    </form>
+
+    {% if result %}
+        <p>{{ result }}</p>
+    {% endif %}
+</body>
+</html>
