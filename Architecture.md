@@ -58,3 +58,70 @@ User Request --> Coordinator Agent (Autogen)
 ## 8. Protocols
 -   Agents should communicate using basic API calls internally (REST).
 -   Implement MCP-like message structure if time allows (optional).
+-   API: OpenRouter's APIs
+
+
+## OPENROUTER API Documentation overview in python.
+```bash
+- Using OpenAI SDK
+from openai import OpenAI
+
+client = OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key="<OPENROUTER_API_KEY>",
+)
+
+completion = client.chat.completions.create(
+  extra_headers={
+    "HTTP-Referer": "<YOUR_SITE_URL>", # Optional. Site URL for rankings on openrouter.ai.
+    "X-Title": "<YOUR_SITE_NAME>", # Optional. Site title for rankings on openrouter.ai.
+  },
+  model="openai/gpt-4o",
+  messages=[
+    {
+      "role": "user",
+      "content": "What is the meaning of life?"
+    }
+  ]
+)
+
+print(completion.choices[0].message.content)
+```
+
+```bash
+- using OpenRouter API Directly
+
+import requests
+import json
+
+response = requests.post(
+  url="https://openrouter.ai/api/v1/chat/completions",
+  headers={
+    "Authorization": "Bearer <OPENROUTER_API_KEY>",
+    "HTTP-Referer": "<YOUR_SITE_URL>", # Optional. Site URL for rankings on openrouter.ai.
+    "X-Title": "<YOUR_SITE_NAME>", # Optional. Site title for rankings on openrouter.ai.
+  },
+  data=json.dumps({
+    "model": "openai/gpt-4o", # Optional
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is the meaning of life?"
+      }
+    ]
+  })
+)
+
+```
+
+
+## Updates (April 2025):
+- Duplicate entry point main.py removed; backend/app.py is now the main backend.
+- Improved web search reliability (timeout increased, better error handling).
+- Added stubs for AnalysisAgent and CommunicationAgent for future expansion.
+
+
+## Current Issues:
+- Web Search reliability improved, but further enhancements possible.
+- In live page, After all the timeouts, it is saying "The model 'api/v1chat' is not available" which should be api/v1/chat. (API endpoint usage is being double-checked)
+- Worker Agent stubs (AnalysisAgent, CommunicationAgent) added; full implementation pending.
