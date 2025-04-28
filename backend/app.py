@@ -15,7 +15,11 @@ from agents.research_agent import ResearchAgent
 from agents.analysis_agent import AnalysisAgent
 from agents.communication_agent import CommunicationAgent
 
-app = Flask(__name__, template_folder="../templates")
+app = Flask(
+    __name__,
+    template_folder=str(Path(__file__).parent.parent / "templates"),
+    static_folder=str(Path(__file__).parent.parent / "static")
+)
 load_dotenv()
 
 # Initialize agents with centralized OpenRouter configuration
@@ -54,28 +58,67 @@ async def handle_research():
         # Break down task
         subtasks = coordinator.break_down_task(task)
         
-        # Assign subtasks and get results
-        results = await coordinator.assign_subtasks(subtasks, [research_worker])
-        
-        # Demonstrate analysis agent usage (stub)
-        analysis_results = []
+        # 🛡️ Filter valid subtasks only
+        valid_subtasks = []
         for subtask in subtasks:
-            analysis_results.append(await analysis_worker.perform_task(subtask))
+            if not any(x in subtask.lower() for x in ["<html", "<head", "<body", "<script>", "<style>", ":root", "--bprogress"]):
+                valid_subtasks.append(subtask)
+
+        if not valid_subtasks:
+            return jsonify({"error": "No valid subtasks generated. Try a simpler query."}), 400
         
-        # Demonstrate communication agent usage (stub)
-        comms = []
-        for result in analysis_results:
-            comms.append(await communication_worker.perform_task(result, recipient="user@example.com"))
+        # Assign subtasks and get results
+        results = await coordinator.assign_subtasks(valid_subtasks, [research_worker])
         
         # Collect and organize results
         final_report = coordinator.collect_results(results)
-        final_report["analysis"] = analysis_results
-        final_report["communications"] = comms
         
         return jsonify(final_report)
         
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error occurred: {str(e)}\n{error_trace}")
         return jsonify({"error": str(e)}), 500
+
+
+
+
+# Uncomment the following lines to enable the analysis and communication agents
+# @app.route("/research", methods=["POST"])
+# async def handle_research():
+#     try:
+#         data = request.json
+#         task = data.get("query")
+        
+#         if not task:
+#             return jsonify({"error": "No query provided"}), 400
+            
+#         # Break down task
+#         subtasks = coordinator.break_down_task(task)
+        
+#         # Assign subtasks and get results
+#         results = await coordinator.assign_subtasks(subtasks, [research_worker])
+        
+#         # Demonstrate analysis agent usage (stub)
+#         analysis_results = []
+#         for subtask in subtasks:
+#             analysis_results.append(await analysis_worker.perform_task(subtask))
+        
+#         # Demonstrate communication agent usage (stub)
+#         comms = []
+#         for result in analysis_results:
+#             comms.append(await communication_worker.perform_task(result, recipient="user@example.com"))
+        
+#         # Collect and organize results
+#         final_report = coordinator.collect_results(results)
+#         final_report["analysis"] = analysis_results
+#         final_report["communications"] = comms
+        
+#         return jsonify(final_report)
+        
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

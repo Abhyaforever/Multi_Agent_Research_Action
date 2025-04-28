@@ -37,6 +37,13 @@ class ResearchAgent:
             # Perform web search
             search_results = perform_web_search(task)
 
+            if isinstance(search_results, str):
+                # If search_results is an error string
+                return f"Web Search Error: {search_results}"
+
+            if not search_results:
+                return "No relevant search results found."
+
             # Create context for analysis
             context = f"Task: {task}\n\nSearch Results:\n"
             for result in search_results:
@@ -71,3 +78,43 @@ class ResearchAgent:
 
         except Exception as e:
             return f"Error in research task: {str(e)}"
+    #    # Uncomment the following lines if you want to use the perform_web_search function directly
+    # async def perform_task(self, task):
+    #     try:
+    #         # Perform web search
+    #         search_results = perform_web_search(task)
+
+    #         # Create context for analysis
+    #         context = f"Task: {task}\n\nSearch Results:\n"
+    #         for result in search_results:
+    #             context += f"- {result['title']}\n  {result['snippet']}\n  Source: {result['link']}\n\n"
+
+    #         # Define the prompt for semantic analysis
+    #         prompt = """
+    #         Analyze the following research results and provide a detailed summary:
+    #         {{$input}}
+            
+    #         Please structure your response as follows:
+    #         1. Key Findings
+    #         2. Important Details
+    #         3. Relevant Examples
+    #         4. Conclusions
+            
+    #         Keep the response focused, accurate, and well-organized.
+    #         """
+
+    #         # Create semantic function
+    #         semantic_function = self.kernel.create_semantic_function(
+    #             prompt=prompt,
+    #             service_id="openrouter",
+    #             max_tokens=1000,
+    #             temperature=0.3
+    #         )
+
+    #         # Generate analysis using the context
+    #         context_vars = sk.ContextVariables(context)
+    #         result = await semantic_function.invoke_async(variables=context_vars)
+    #         return str(result.result)
+
+    #     except Exception as e:
+    #         return f"Error in research task: {str(e)}"

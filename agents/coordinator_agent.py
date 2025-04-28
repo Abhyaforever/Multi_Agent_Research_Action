@@ -49,52 +49,70 @@ class CoordinatorAgent:
         
         results = await asyncio.gather(*tasks)
         return results    
-    def collect_results(self, results):
-        """Organize and summarize the results into a coherent report"""
-        combined_results = "\n\n".join(results)
-        
-        prompt = f"""
-        Based on the research results below, create a comprehensive report with clear sections and a conclusion. Include specific examples and insights where relevant.
 
-        Research Results:
-        {combined_results}
+    def collect_results(self, results):
+        """Organize and summarize the results into a simple coherent report (without LLM call)"""
+        sections = []
+        for idx, result in enumerate(results, 1):
+            sections.append({
+                "title": f"Subtask {idx}",
+                "content": result
+            })
         
-        Create a well-structured report with:
-        1. Clear sections for each major topic
-        2. A comprehensive conclusion
+        conclusion = "This concludes the research report. Each subtask above addresses a specific aspect of the original query."
         
-        Format the response as a JSON object with this structure:
-        {{
-            "sections": [
-                {{"title": "Section Title", "content": "Section content"}},
-                ...
-            ],
-            "conclusion": "Overall summary and key takeaways"
-        }}
-        """
+        return {
+            "sections": sections,
+            "conclusion": conclusion
+        }
+
+    #### Uncomment the following method if you want to use LLM for result collection
+    # def collect_results(self, results):
+    #     """Organize and summarize the results into a coherent report"""
+    #     combined_results = "\n\n".join(results)
         
-        response = openai.chat.completions.create(
-            **OpenRouterConfig.get_completion_config(),
-            messages=[{"role": "user", "content": prompt}]
-        )
-        print('DEBUG collect_results response:', response)
-        # Handle both string and object response types
-        if isinstance(response, str):
-            content = response
-        elif hasattr(response, 'choices'):
-            content = response.choices[0].message.content
-        elif isinstance(response, dict) and 'choices' in response:
-            content = response['choices'][0]['message']['content']
-        else:
-            raise ValueError(f"Unexpected response type: {type(response)}")
-        try:
-            return json.loads(content)
-        except json.JSONDecodeError:
-            # Fallback in case of JSON parsing error
-            return {
-                "sections": [{
-                    "title": "Research Results",
-                    "content": content
-                }],
-                "conclusion": "Unable to format results in structured format."
-            }
+    #     prompt = f"""
+    #     Based on the research results below, create a comprehensive report with clear sections and a conclusion. Include specific examples and insights where relevant.
+
+    #     Research Results:
+    #     {combined_results}
+        
+    #     Create a well-structured report with:
+    #     1. Clear sections for each major topic
+    #     2. A comprehensive conclusion
+        
+    #     Format the response as a JSON object with this structure:
+    #     {{
+    #         "sections": [
+    #             {{"title": "Section Title", "content": "Section content"}},
+    #             ...
+    #         ],
+    #         "conclusion": "Overall summary and key takeaways"
+    #     }}
+    #     """
+        
+    #     response = openai.chat.completions.create(
+    #         **OpenRouterConfig.get_completion_config(),
+    #         messages=[{"role": "user", "content": prompt}]
+    #     )
+    #     print('DEBUG collect_results response:', response)
+    #     # Handle both string and object response types
+    #     if isinstance(response, str):
+    #         content = response
+    #     elif hasattr(response, 'choices'):
+    #         content = response.choices[0].message.content
+    #     elif isinstance(response, dict) and 'choices' in response:
+    #         content = response['choices'][0]['message']['content']
+    #     else:
+    #         raise ValueError(f"Unexpected response type: {type(response)}")
+    #     try:
+    #         return json.loads(content)
+    #     except json.JSONDecodeError:
+    #         # Fallback in case of JSON parsing error
+    #         return {
+    #             "sections": [{
+    #                 "title": "Research Results",
+    #                 "content": content
+    #             }],
+    #             "conclusion": "Unable to format results in structured format."
+    #         }

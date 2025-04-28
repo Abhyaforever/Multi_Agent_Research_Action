@@ -1,36 +1,41 @@
-# Web Search Tool
 import requests
-import json
 import os
-from typing import List, Dict
 
-def perform_web_search(query: str) -> List[Dict]:
+def perform_web_search(query: str):
     """
-    Performs a web search using the DuckDuckGo API
-    Returns a list of search results with title, link, and snippet
+    Perform a web search using Serper.dev API
+    Returns summarized text.
     """
-    # Basic validation: skip if query looks like HTML or CSS
-    if any(x in query.lower() for x in ["<html", "<head", "<body", "<style", ":root", "--bprogress"]):
-        print(f"Web search skipped for invalid query: {query[:60]}...")
-        return [{'title': 'Invalid Query', 'snippet': 'Query looked like HTML/CSS and was skipped.', 'link': None}]
+    api_key = os.getenv("SERPER_API_KEY")
+    if not api_key:
+        raise ValueError("SERPER_API_KEY not found in environment.")
+
+    url = "https://google.serper.dev/search"
+    headers = {
+        "X-API-KEY": api_key,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "q": query
+    }
+
     try:
-        # Using DuckDuckGo API
-        url = f"https://api.duckduckgo.com/?q={query}&format=json"
-        response = requests.get(url, timeout=3)
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response.raise_for_status()
         data = response.json()
-        results = []
-        if 'RelatedTopics' in data:
-            for topic in data['RelatedTopics'][:5]:  # Get top 5 results
-                if 'Text' in topic and 'FirstURL' in topic:
-                    results.append({
-                        'title': topic['Text'].split(' - ')[0],
-                        'snippet': topic['Text'],
-                        'link': topic['FirstURL']
-                    })
-        # If no results, return a fallback
+        
+        results = data.get('organic', [])
         if not results:
-            return [{'title': 'No Results', 'snippet': 'No web results found or API returned nothing.', 'link': None}]
-        return results
+            return "No relevant search results found."
+
+        output = ""
+        for item in results[:3]:  # Top 3 results
+            title = item.get('title', '')
+            link = item.get('link', '')
+            snippet = item.get('snippet', '')
+            output += f"🔗 {title}\n{snippet}\n{link}\n\n"
+
+        return output.strip()
+
     except Exception as e:
-        print(f"Error in web search: {str(e)}")
-        return [{'title': 'Web Search Unavailable', 'snippet': f'Web search timed out or failed: {str(e)}. Continuing without web results.', 'link': None}]
+        return f"Error during web search: {str(e)}"
