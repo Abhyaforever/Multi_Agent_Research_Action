@@ -1,40 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Agent Research System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/static/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Agent Research Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/main.css">
+  <style>
+    body {
+      background: linear-gradient(to bottom right, #eef2f3, #cfd9df);
+    }
+    .card {
+      @apply bg-white shadow-md rounded-xl p-6 border border-gray-200;
+    }
+    .card-header {
+      @apply text-xl font-semibold mb-2 text-blue-700;
+    }
+    .card-body p, .card-body li {
+      @apply text-gray-700;
+    }
+    a {
+      @apply text-blue-600 underline hover:text-blue-800 transition;
+    }
+    .loading {
+      @apply hidden flex flex-col items-center justify-center my-10;
+    }
+    .spinner {
+      border: 4px solid #ccc;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <div class="max-w-4xl mx-auto">
-            <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">Multi-Agent Research Assistant</h1>
-            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <div class="flex gap-4">
-                    <input 
-                        type="text" 
-                        id="queryInput"
-                        class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter your research topic..."
-                        required
-                    >
-                    <button 
-                        onclick="submitQuery()"
-                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
-                    >
-                        Research
-                    </button>
-                </div>
-            </div>
-            <div class="loading">
-                <div class="spinner"></div>
-                <p class="mt-4 text-gray-600">Processing your request...</p>
-            </div>
-            <div id="results" class="space-y-6"></div>
+<body class="min-h-screen">
+  <div class="container mx-auto px-4 py-10">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-4xl font-bold text-center mb-10 text-gray-800">Multi-Agent Research Assistant</h1>
+
+      <!-- Input form -->
+      <div class="card mb-10">
+        <div class="flex gap-4">
+          <input 
+            type="text" 
+            id="queryInput"
+            class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your question,"
+            required
+          >
+          <button 
+            onclick="submitQuery()"
+            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+          >
+            Research
+          </button>
         </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading" id="loadingSpinner">
+        <div class="spinner"></div>
+        <p class="mt-4 text-gray-600">Processing your request...</p>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="space-y-6"></div>
     </div>
-    <script src="/static/main.js"></script>
+  </div>
+
+  <script src="/static/main.js"></script>
 </body>
 </html>

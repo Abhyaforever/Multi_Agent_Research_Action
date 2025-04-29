@@ -1,4 +1,10 @@
-/* main.css - custom styles for research system */
+/* main.css - enhanced styles for research system */
+
+body {
+    background: linear-gradient(to bottom right, #eef2f3, #cfd9df);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .loading {
     display: none;
     position: fixed;
@@ -23,4 +29,37 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Card style */
+.card {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Section titles */
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1d4ed8;
+    margin-bottom: 1rem;
+}
+
+/* Prose styling */
+.prose p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.prose a {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.prose ul {
+    list-style: disc;
+    margin-left: 1.5rem;
 }

@@ -37,9 +37,15 @@ class ResearchAgent:
             # Perform web search
             search_results = perform_web_search(task)
 
+            
+
+            # Uncomment the following lines if you want to handle errors in search_results
+
             if isinstance(search_results, str):
                 # If search_results is an error string
-                return f"Web Search Error: {search_results}"
+                output = "🔎 Search Results:\n\n"
+                output += "- Title: ...\n"
+                return f"{search_results}"
 
             if not search_results:
                 return "No relevant search results found."

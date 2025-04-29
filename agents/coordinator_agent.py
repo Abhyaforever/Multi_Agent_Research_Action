@@ -4,6 +4,9 @@ import json
 import asyncio
 from config.settings import OpenRouterConfig
 
+import os
+from openai import OpenAI
+
 class CoordinatorAgent:
     def __init__(self, name, llm_config):
         self.name = name
@@ -13,32 +16,84 @@ class CoordinatorAgent:
         openai.base_url = OpenRouterConfig.BASE_URL
         self.headers = OpenRouterConfig.get_headers()
 
-    def break_down_task(self, task):
-        """Break down a complex task into smaller, focused subtasks"""
-        prompt = f"""
-        Break down the following research task into 2-4 specific subtasks:
-        Task: {task}
-        
-        Each subtask should be focused, specific, and contribute to the overall goal.
-        Return only the list of subtasks, one per line.
+    def break_down_task(self, task: str, max_subtasks: int = 5) -> list:
         """
+        Break down a research task into a list of clean, short subtasks using OpenRouter LLM.
+        Limits to max_subtasks to avoid junk.
+        """
+        try:
+            import openai
+            import os
+
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            openai.api_base = os.getenv("BASE_URL")
+
+            prompt = f"""
+            You are a research assistant. Break the user's request into {max_subtasks} specific subtasks or research prompts.
+            Each subtask should be short, focused, and not overlap with others.
+
+            Task: {task}
+
+            Return the subtasks as a numbered list only, without explanation.
+            """
+
+            response = openai.ChatCompletion.create(
+                model="openai/gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful AI research assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2
+            )
+
+            text = response["choices"][0]["message"]["content"]
+            lines = text.strip().split("\n")
+
+            # Clean and extract subtasks
+            subtasks = []
+            for line in lines:
+                line = line.strip()
+                if line and (line[0].isdigit() or line[0] in "-*"):
+                    task_part = line.split(".", 1)[-1].strip()
+                    if task_part:
+                        subtasks.append(task_part)
+                elif len(line) > 10:
+                    subtasks.append(line)
+
+            return subtasks[:max_subtasks]
+
+        except Exception as e:
+            print(f"[Coordinator] Subtask generation failed: {e}")
+            return [task]
+
+
+    # uncomment the following method if you want to use LLM for task breakdown
+    # def break_down_task(self, task):
+    #     """Break down a complex task into smaller, focused subtasks"""
+    #     prompt = f"""
+    #     Break down the following research task into 2-4 specific subtasks:
+    #     Task: {task}
+        
+    #     Each subtask should be focused, specific, and contribute to the overall goal.
+    #     Return only the list of subtasks, one per line.
+    #     """
     
-        response = openai.chat.completions.create(
-            **OpenRouterConfig.get_completion_config(),
-            messages=[{"role": "user", "content": prompt}]
-        )
-        print('DEBUG break_down_task response:', response)
-        # Handle both string and object response types
-        if isinstance(response, str):
-            content = response
-        elif hasattr(response, 'choices'):
-            content = response.choices[0].message.content
-        elif isinstance(response, dict) and 'choices' in response:
-            content = response['choices'][0]['message']['content']
-        else:
-            raise ValueError(f"Unexpected response type: {type(response)}")
-        subtasks = content.strip().split('\n')
-        return [task.strip() for task in subtasks if task.strip()]
+    #     response = openai.chat.completions.create(
+    #         **OpenRouterConfig.get_completion_config(),
+    #         messages=[{"role": "user", "content": prompt}]
+    #     )
+    #     print('DEBUG break_down_task response:', response)
+    #     # Handle both string and object response types
+    #     if isinstance(response, str):
+    #         content = response
+    #     elif hasattr(response, 'choices'):
+    #         content = response.choices[0].message.content
+    #     elif isinstance(response, dict) and 'choices' in response:
+    #         content = response['choices'][0]['message']['content']
+    #     else:
+    #         raise ValueError(f"Unexpected response type: {type(response)}")
+    #     subtasks = content.strip().split('\n')
+    #     return [task.strip() for task in subtasks if task.strip()]
 
     async def assign_subtasks(self, subtasks, workers):
         """Assign subtasks to workers and collect results asynchronously"""
@@ -50,21 +105,60 @@ class CoordinatorAgent:
         results = await asyncio.gather(*tasks)
         return results    
 
-    def collect_results(self, results):
-        """Organize and summarize the results into a simple coherent report (without LLM call)"""
+    def generate_conclusion(self, subtasks, results):
+        try:
+            client = OpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("BASE_URL")
+            )
+
+            content = "\n".join(results)
+            prompt = f"""
+            Given the following research subtasks and their findings, generate a detailed, intelligent conclusion that gives useful recommendations to the user:
+
+            Subtasks:
+            {subtasks}
+
+            Results:
+            {content}
+
+            Respond in clear, concise, paragraph form.
+            """
+
+            response = client.chat.completions.create(
+                model="openai/gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a research assistant."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+
+            return response.choices[0].message.content.strip()
+
+        except Exception as e:
+            return f"Final conclusion could not be generated: {str(e)}"
+
+
+    def collect_results(self, results, subtasks=None):
         sections = []
-        for idx, result in enumerate(results, 1):
+        for idx, result in enumerate(results):
+            if not result:
+                continue  # skip failed subtasks
+
+            title = subtasks[idx] if subtasks and idx < len(subtasks) else f"Subtask {idx + 1}"
             sections.append({
-                "title": f"Subtask {idx}",
+                "title": title,
                 "content": result
             })
-        
-        conclusion = "This concludes the research report. Each subtask above addresses a specific aspect of the original query."
-        
+
+        conclusion = self.generate_conclusion([s['title'] for s in sections], [s['content'] for s in sections])
         return {
             "sections": sections,
             "conclusion": conclusion
         }
+
+
 
     #### Uncomment the following method if you want to use LLM for result collection
     # def collect_results(self, results):
@@ -116,3 +210,6 @@ class CoordinatorAgent:
     #             }],
     #             "conclusion": "Unable to format results in structured format."
     #         }
+
+    
+
