@@ -134,7 +134,7 @@ Multi_Agent_Research_Action/
 
 Run tests with:
 ```powershell
-python -m unittest discover tests
+python -m unittest discover -s tests -p "*.py" -v
 ```
 
 ---

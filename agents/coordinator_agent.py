@@ -16,55 +16,43 @@ class CoordinatorAgent:
         openai.base_url = OpenRouterConfig.BASE_URL
         self.headers = OpenRouterConfig.get_headers()
 
-    def break_down_task(self, task: str, max_subtasks: int = 5) -> list:
-        """
-        Break down a research task into a list of clean, short subtasks using OpenRouter LLM.
-        Limits to max_subtasks to avoid junk.
-        """
-        try:
-            import openai
-            import os
+    from openai import OpenAI
+    import os
 
-            openai.api_key = os.getenv("OPENAI_API_KEY")
-            openai.api_base = os.getenv("BASE_URL")
+    def break_down_task(self, task: str, max_subtasks: int = 5) -> list:
+        try:
+            client = OpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("BASE_URL")
+            )
 
             prompt = f"""
-            You are a research assistant. Break the user's request into {max_subtasks} specific subtasks or research prompts.
-            Each subtask should be short, focused, and not overlap with others.
+            You are a research assistant. Break this into {max_subtasks} subtasks. Avoid repetition.
 
             Task: {task}
 
-            Return the subtasks as a numbered list only, without explanation.
+            Return only a numbered list of subtasks.
             """
 
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="openai/gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a helpful AI research assistant."},
+                    {"role": "system", "content": "You are a helpful agent."},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.2
+                temperature=0.3,
             )
 
-            text = response["choices"][0]["message"]["content"]
-            lines = text.strip().split("\n")
-
-            # Clean and extract subtasks
-            subtasks = []
-            for line in lines:
-                line = line.strip()
-                if line and (line[0].isdigit() or line[0] in "-*"):
-                    task_part = line.split(".", 1)[-1].strip()
-                    if task_part:
-                        subtasks.append(task_part)
-                elif len(line) > 10:
-                    subtasks.append(line)
+            text = response.choices[0].message.content.strip()
+            lines = text.split("\n")
+            subtasks = [line.split(".", 1)[-1].strip() for line in lines if "." in line]
 
             return subtasks[:max_subtasks]
 
         except Exception as e:
             print(f"[Coordinator] Subtask generation failed: {e}")
             return [task]
+
 
 
     # uncomment the following method if you want to use LLM for task breakdown
