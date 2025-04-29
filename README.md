@@ -1,6 +1,6 @@
 # 🧠 Multi-Agent Research Action System
 
-A modular, extensible multi-agent AI assistant built in just 1 day during a 21-day hackathon — designed to show how LLM agents can collaborate, automate research, and take intelligent action.
+I began this project in the final 48 hours of a 23-day hackathon—not out of procrastination, but passion. Although I started late due to unavailability, I poured my energy into crafting this foundation for multi-agent AI. Despite starting late, the project demonstrates the potential for intelligent task delegation across autonomous components, highlighting the core capabilities of future AI assistants.
 
 ---
 
@@ -140,7 +140,7 @@ python -m unittest discover -s tests -p "*.py" -v
 ---
 
 ## 🙋‍♂️ Personal Note (Hackathon Reflection)
-I began this project in the final 24 hours of a 21-day hackathon — not out of procrastination, but passion.
+I began this project in the final 48 hours of a 23-day hackathon — not out of procrastination, but passion.
 
 This is more than a demo. It's a foundation for agents that think, act, and assist. From delegation to summarization, this is what multi-agent AI can feel like in real apps.
 
